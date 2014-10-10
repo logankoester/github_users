@@ -1,6 +1,11 @@
 require 'json'
 require 'open-uri'
 
+if node['github_users']['generate_passwords']
+  ::Chef::Recipe.send(:include, Opscode::OpenSSL::Password)
+  default_password = node['github_users']['default_password']
+end
+
 usernames = []
 
 if node['github_users']['organization']
@@ -37,8 +42,9 @@ usernames.each do |username|
         gid node['github_users']['group_name']
         home "/home/#{username}"
         shell "/bin/bash"
-        system true
+        system node['github_users']['system']
         supports :manage_home => true
+        password `openssl passwd -1 "#{default_password}"` if default_password
 
         action :create
     end
